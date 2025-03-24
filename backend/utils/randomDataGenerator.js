@@ -183,7 +183,7 @@ const generateSummaryWithOpenAI = async (vitals) => {
 
     try {
         const response = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o",
             messages: [
                 { role: "system", content: "You are a healthcare assistant providing brief patient summaries." },
                 { role: "user", content: prompt }
@@ -208,7 +208,7 @@ const generateRandomVitals = async () => {
         heartRate,
         fitnessLevel,
         bloodPressure: `${Math.floor(Math.random() * 50) + 80}/${Math.floor(Math.random() * 30) + 60}`,
-        stepsTaken: Math.floor(Math.random() * 10000),
+        stepsTaken: Math.floor(Math.random() * 10000), 
     };
 
     try {
