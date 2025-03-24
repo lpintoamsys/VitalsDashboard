@@ -159,9 +159,6 @@ const getHeartRateAndFitness = (sex, age) => {
     };
 };
 
-// Hard-coded API key as a fallback
-const API_KEY = "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";
-
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || API_KEY,
 });
