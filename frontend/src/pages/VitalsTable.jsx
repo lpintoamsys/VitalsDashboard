@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import QuoteDisplay from '../components/QuoteDisplay';
 
 const VitalsTable = ({ vitals }) => {
     const [currentDateTime, setCurrentDateTime] = useState(new Date());
@@ -15,21 +16,21 @@ const VitalsTable = ({ vitals }) => {
     // Process steps to make them accumulate realistically per user
     useEffect(() => {
         if (!Array.isArray(vitals) || vitals.length === 0) return;
-        
+
         const userStepMap = { ...cumulativeSteps };
         const lastUpdateMap = { ...lastUpdated };
         const currentTime = new Date();
-        
+
         // Get the current time as hours in the day (0-24)
         const currentHour = currentTime.getHours();
-        
+
         // Process each vital record to maintain continuity in step counts
         vitals.forEach(vital => {
             if (!vital) return;
-            
+
             const userKey = `${vital.firstName}-${vital.lastName}`;
             const vitalTime = new Date(vital.timestamp);
-            
+
             // If this is a new user or first record of the day
             if (!userStepMap[userKey]) {
                 // Base steps on time of day - morning has fewer steps than afternoon
@@ -40,7 +41,7 @@ const VitalsTable = ({ vitals }) => {
                     // Cap initial steps at 2000 to avoid too high values
                     2000
                 );
-                
+
                 userStepMap[userKey] = baseSteps;
                 lastUpdateMap[userKey] = vitalTime;
                 vital.stepsTaken = baseSteps;
@@ -48,22 +49,22 @@ const VitalsTable = ({ vitals }) => {
                 // For existing users, calculate a realistic increment based on time elapsed
                 const lastUpdate = lastUpdateMap[userKey];
                 const minutesElapsed = lastUpdate ? (vitalTime - lastUpdate) / (1000 * 60) : 1;
-                
+
                 // Only add steps if a reasonable time has passed
                 if (minutesElapsed >= 0.25) { // At least 15 seconds between updates
                     // Calculate steps: 60-100 steps per minute on average
                     const stepsPerMinute = Math.floor(Math.random() * 40) + 60;
                     const incrementSteps = Math.floor(stepsPerMinute * Math.min(minutesElapsed, 3)); // Cap at 3 minutes worth
-                    
+
                     userStepMap[userKey] = Math.min(userStepMap[userKey] + incrementSteps, 20000); // Daily max of 20k
                     lastUpdateMap[userKey] = vitalTime;
                 }
-                
+
                 // Update the vital object with our accumulated step count
                 vital.stepsTaken = userStepMap[userKey];
             }
         });
-        
+
         setCumulativeSteps(userStepMap);
         setLastUpdated(lastUpdateMap);
     }, [vitals]);
@@ -113,7 +114,7 @@ const VitalsTable = ({ vitals }) => {
         // Format steps with thousand separators for better readability
         return steps.toLocaleString();
     };
-    
+
     // Format step count with activity indicator
     const getStepActivityStatus = (steps) => {
         if (steps < 2000) return { status: 'Sedentary', color: 'text-red-600' };
@@ -138,8 +139,9 @@ const VitalsTable = ({ vitals }) => {
                         <div className="flex items-center space-x-4">
                             <img src="/healthcare.png" alt="Pulse Care Logo" className="h-10 w-auto" />
                             <div>
-                                <h1 className="text-2xl font-semibold text-gray-900">Pulse Care</h1>
-                                <p className="text-xl text-gray-500">Health Monitoring System</p>
+                                <h1 className="text-2xl font-semibold text-gray-900">PulseCare Health</h1>
+                                <QuoteDisplay />
+                                <p className="text-xl text-gray-500"></p>
                             </div>
                         </div>
                         <div className="text-right">
@@ -152,87 +154,87 @@ const VitalsTable = ({ vitals }) => {
             </div>
 
             {/* Main Content */}
-            <div className="p-6">
-                <div className="max-w-[98%] mx-auto">
-                    <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100">
-                        <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700">
-                            <h2 className="text-xl font-semibold text-white">Live Health Vitals Monitor</h2>
-                            <p className="text-blue-100 text-sm mt-1">Real-time patient monitoring dashboard</p>
-                        </div>
+            <div className="p-4">
+                <div className="max-w-[100%] mx-auto">
+                        <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100">
+                            <div className="px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700">
+                                <h2 className="text-xl font-semibold text-white">Real-time Patient Monitoring Dashboard</h2>
+                            </div>
 
-                        <div className="overflow-x-auto">
-                            <div className="inline-block min-w-full align-middle">
-                                <div className="overflow-hidden">
-                                    <div className="overflow-y-auto" style={{ height: 'calc(100vh - 230px)' }}>
-                                        <table className="min-w-full divide-y divide-gray-200">
-                                            <thead className="bg-gray-50 sticky top-0 z-10">
-                                                <tr>
-                                                    {['Timestamp', 'First Name', 'Last Name', 'Age', 'Heart Rate', 'Blood Pressure', 'Steps Taken', 'Fitness Level', 'Notes']
-                                                        .map((header, index) => (
-                                                            <th key={index}
-                                                                className={`px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider bg-gray-50 whitespace-nowrap ${header === 'Notes' ? 'min-w-[300px]' : ''}`}
-                                                                style={{ position: 'sticky', top: 0 }}>
-                                                                {header}
-                                                            </th>
-                                                        ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody className="bg-white divide-y divide-gray-100">
-                                                {Array.isArray(vitals) && vitals.map((vital, index) => {
-                                                    if (!vital || !vital.timestamp) return null;
-                                                    
-                                                    const timestamp = formatTimestamp(vital.timestamp);
-                                                    const stepActivity = getStepActivityStatus(vital.stepsTaken);
-                                                    const stepProgress = getStepProgress(vital.stepsTaken);
-                                                    
-                                                    return (
-                                                        <tr key={index} className="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <div className="text-sm font-medium text-gray-900">{timestamp.date}</div>
-                                                                <div className="text-sm text-gray-500">{timestamp.time}</div>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vital.firstName}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vital.lastName}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vital.age}</td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <div className="text-sm font-medium text-gray-900">{vital.heartRate}</div>
-                                                                <div className="text-sm text-gray-500">BPM</div>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <div className="text-sm font-medium text-gray-900">{vital.bloodPressure}</div>
-                                                                <div className="text-sm text-gray-500">BP</div>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <div className="text-sm font-medium text-gray-900">{formatStepDisplay(vital.stepsTaken)}</div>
-                                                                <div className={`text-sm ${stepActivity.color}`}>{stepActivity.status}</div>
-                                                                
-                                                                {/* Progress bar */}
-                                                                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
-                                                                    <div 
-                                                                        className={`h-1.5 rounded-full ${stepActivity.color.replace('text-', 'bg-')}`} 
-                                                                        style={{ width: `${stepProgress}%` }}>
+                            <div className="overflow-x-auto">
+                                <div className="inline-block min-w-full align-middle">
+                                    <div className="overflow-hidden">
+                                        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 230px)' }}>
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50 sticky top-0 z-10">
+                                                    <tr>
+                                                        {['Timestamp', 'First Name', 'Last Name', 'Age', 'Heart Rate', 'Blood Pressure', 'Steps Taken', 'Fitness Level', 'Notes']
+                                                            .map((header, index) => (
+                                                                <th key={index}
+                                                                    className={`px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider bg-gray-50 whitespace-nowrap ${header === 'Notes' ? 'min-w-[300px]' : ''}`}
+                                                                    style={{ position: 'sticky', top: 0 }}>
+                                                                    {header}
+                                                                </th>
+                                                            ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-100">
+                                                    {Array.isArray(vitals) && vitals.map((vital, index) => {
+                                                        if (!vital || !vital.timestamp) return null;
+
+                                                        const timestamp = formatTimestamp(vital.timestamp);
+                                                        const stepActivity = getStepActivityStatus(vital.stepsTaken);
+                                                        const stepProgress = getStepProgress(vital.stepsTaken);
+
+                                                        return (
+                                                            <tr key={index} className="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                                    <div className="text-sm font-medium text-gray-900">{timestamp.date}</div>
+                                                                    <div className="text-sm text-gray-500">{timestamp.time}</div>
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vital.firstName}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vital.lastName}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vital.age}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                                    <div className="text-sm font-medium text-gray-900">{vital.heartRate}</div>
+                                                                    <div className="text-sm text-gray-500">BPM</div>
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                                    <div className="text-sm font-medium text-gray-900">{vital.bloodPressure}</div>
+                                                                    <div className="text-sm text-gray-500">BP</div>
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                                    <div className="text-sm font-medium text-gray-900">{formatStepDisplay(vital.stepsTaken)}</div>
+                                                                    <div className={`text-sm ${stepActivity.color}`}>{stepActivity.status}</div>
+
+                                                                    {/* Progress bar */}
+                                                                    <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
+                                                                        <div
+                                                                            className={`h-1.5 rounded-full ${stepActivity.color.replace('text-', 'bg-')}`}
+                                                                            style={{ width: `${stepProgress}%` }}>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                                
-                                                                <div className="text-xs text-gray-500 mt-0.5">
-                                                                    {stepProgress}% of daily goal
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium ${getFitnessLevelColor(vital.fitnessLevel)}`}>
-                                                                    {vital.fitnessLevel}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-6 py-4 text-sm text-gray-500 min-w-[300px]">
-                                                                <div className="break-words">
-                                                                    {vital.notes}
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
+
+                                                                    <div className="text-xs text-gray-500 mt-0.5">
+                                                                        {stepProgress}% of daily goal
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-md font-medium ${getFitnessLevelColor(vital.fitnessLevel)}`}>
+                                                                        {vital.fitnessLevel}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-6 py-4 text-sm text-gray-500 min-w-[300px]">
+                                                                    <div className="break-words">
+                                                                        {vital.notes}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -240,7 +242,6 @@ const VitalsTable = ({ vitals }) => {
                     </div>
                 </div>
             </div>
-        </div>
     );
 };
 

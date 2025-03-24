@@ -130,6 +130,11 @@ const heartRateRanges = {
     }
 };
 
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || API_KEY,
+});
+
+
 // Get age group for a given age
 const getAgeGroup = (age) => {
     if (age <= 25) return "18-25";
@@ -159,17 +164,14 @@ const getHeartRateAndFitness = (sex, age) => {
     };
 };
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || API_KEY,
-});
 
 // Rest of your code remains the same until the OpenAI function
 
 // OpenAI function to generate summary - FIXED FORMAT
 const generateSummaryWithOpenAI = async (vitals) => {
     const prompt = `
-    Given the following health data of a person, generate a shorter and concise medical summary:
-
+    Given the following health data of a person, generate three concise health recommendations in bullet points:
+    
     - Name: ${vitals.firstName} ${vitals.lastName}
     - Age: ${vitals.age}
     - Sex: ${vitals.sex}
@@ -177,24 +179,36 @@ const generateSummaryWithOpenAI = async (vitals) => {
     - Fitness Level: ${vitals.fitnessLevel}
     - Blood Pressure: ${vitals.bloodPressure}
     - Steps Taken: ${vitals.stepsTaken}
-
-    Provide a brief health summary highlighting key points and potential health risks (if any).
+    
+    Format the response as follows:
+    
+    🔹 **Health Recommendations for ${vitals.firstName} ${vitals.lastName}**  
+    
+    - 🚶‍♀️ **Boost Activity**: (Brief recommendation about steps/exercise).  
+    - ❤️ **Stay Consistent**: (Encouragement for maintaining heart rate & BP).  
+    - 🔍 **Monitor Regularly**: (General advice on monitoring vitals).  
     `;
 
     try {
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
-                { role: "system", content: "You are a healthcare assistant providing brief patient summaries." },
+                { role: "system", content: "You are a healthcare assistant providing concise health recommendations." },
                 { role: "user", content: prompt }
             ],
-            max_tokens: 200,
+            max_tokens: 150,
         });
 
         return response.choices[0].message.content.trim();
     } catch (error) {
-        console.error("Error generating summary:", error);
-        return `Health summary for ${vitals.firstName} ${vitals.lastName}: Heart rate ${vitals.heartRate} BPM indicates ${vitals.fitnessLevel.toLowerCase()} fitness level. Blood pressure: ${vitals.bloodPressure}. Patient has taken ${vitals.stepsTaken} steps today.`;
+        console.error("Error generating recommendations:", error);
+        return `
+        🔹 **Health Recommendations for ${vitals.firstName} ${vitals.lastName}**  
+
+        - 🚶‍♀️ **Boost Activity**: Aim for 7,500+ steps daily for better endurance and metabolism.  
+        - ❤️ **Stay Consistent**: Maintain heart rate and blood pressure with regular movement.  
+        - 🔍 **Monitor Regularly**: No concerns detected, but routine check-ups are encouraged.  
+        `;
     }
 };
 
@@ -208,17 +222,9 @@ const generateRandomVitals = async () => {
         heartRate,
         fitnessLevel,
         bloodPressure: `${Math.floor(Math.random() * 50) + 80}/${Math.floor(Math.random() * 30) + 60}`,
-        stepsTaken: Math.floor(Math.random() * 10000), 
+        stepsTaken: Math.floor(Math.random() * 10000),
     };
-
-    try {
-        // Get AI-generated summary
-        vitals.notes = await generateSummaryWithOpenAI(vitals);
-    } catch (error) {
-        console.error("Failed to generate AI summary:", error);
-        vitals.notes = `Health summary for ${vitals.firstName} ${vitals.lastName}: Heart rate ${vitals.heartRate} BPM indicates ${vitals.fitnessLevel.toLowerCase()} fitness level. Blood pressure: ${vitals.bloodPressure}.`;
-    }
-
+    vitals.notes = await generateSummaryWithOpenAI(vitals);
     return vitals;
 };
 
